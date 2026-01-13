@@ -15,7 +15,7 @@ export interface AuthRequest extends Request {
 }
 
 export async function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
-  const authHeader = req.headers["authorization"] as string | undefined;
+  const authHeader = (req as any).headers["authorization"] as string | undefined;
   const token = authHeader && authHeader.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Missing token" });
 

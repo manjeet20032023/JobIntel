@@ -9,6 +9,8 @@ export interface IApplication extends mongoose.Document {
   method?: string;
   status?: string;
   proof?: any;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const ApplicationSchema = new Schema<IApplication>(
