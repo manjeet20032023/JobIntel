@@ -63,20 +63,35 @@ jobs:
 
       - name: Install production dependencies
         run: |
+          set -euxo pipefail
           cd backend
-          npm ci --omit=dev --legacy-peer-deps
+          echo "Install production dependencies in $(pwd)"
+          npm ci --omit=dev --legacy-peer-deps || {
+            echo "npm ci failed in backend/ — listing backend/ for debugging";
+            ls -la . || true;
+            ls -la package.json || true;
+            npm --version || true;
+            node --version || true;
+            exit 1;
+          }
+          echo "Installed node modules:" && ls -la node_modules | head -20
           cd ..
-          ls -la backend/node_modules | head -10
 
       - name: Package node_modules for Azure extraction
         run: |
           cd backend
           # remove any existing tarball to avoid stale content
           rm -f node_modules.tar.gz || true
-          tar -czf node_modules.tar.gz node_modules
-          echo "Created node_modules.tar.gz:" && ls -lh node_modules.tar.gz
-          # show a short sample of files to verify presence
-          tar -tf node_modules.tar.gz | head -20
+          if [ -d node_modules ]; then
+            tar -czf node_modules.tar.gz node_modules
+            echo "Created node_modules.tar.gz:" && ls -lh node_modules.tar.gz
+            tar -tf node_modules.tar.gz | head -20
+          else
+            echo "ERROR: backend/node_modules not found — cannot create tarball" >&2
+            ls -la .. || true
+            ls -la . || true
+            exit 2
+          fi
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
