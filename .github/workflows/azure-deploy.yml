@@ -64,9 +64,9 @@ jobs:
       - name: Install production dependencies
         run: |
           set -euxo pipefail
-          echo "Install production dependencies into backend/node_modules using --prefix"
-          npm ci --prefix backend --omit=dev --legacy-peer-deps || {
-            echo "npm ci failed for backend (prefix) — debugging";
+          echo "Install production dependencies into backend/node_modules using --prefix (npm install)"
+          npm install --prefix backend --omit=dev --legacy-peer-deps --no-audit --no-fund || {
+            echo "npm install failed for backend (prefix) — debugging";
             ls -la backend || true;
             ls -la backend/package.json || true;
             npm --version || true;
