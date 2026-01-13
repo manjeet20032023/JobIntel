@@ -63,6 +63,7 @@ const JobsPage = () => {
     try {
       const base = backendBase ? backendBase.replace(/\/$/, '') : '';
       const url = base ? `${base}/api/jobs?status=active` : '/api/jobs?status=active';
+      console.log('[JobsPage] Fetching jobs from:', url, '(backendBase:', backendBase, ')');
       const response = await fetch(url, { cache: 'no-store' });
       if (response.ok) {
         try {
