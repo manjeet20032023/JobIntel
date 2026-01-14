@@ -77,7 +77,7 @@ export async function getUserStats(_req: Request, res: Response) {
       .select('email name tier createdAt')
       .sort({ createdAt: -1 })
       .limit(20)
-      .lean();
+      .lean() as Array<any>;
 
     // Count applications per user
     const userAppCounts = await Application.aggregate([
