@@ -109,7 +109,9 @@ export const useNotificationStore = create<NotificationState>((set) => ({
 // Open SSE connection for realtime notifications (client-side only)
 if (typeof window !== 'undefined' && (window as any).EventSource) {
   try {
-    const es = new EventSource('/api/notifications/stream');
+    const backendBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    const streamUrl = backendBase ? `${backendBase}/api/notifications/stream` : '/api/notifications/stream';
+    const es = new EventSource(streamUrl);
     es.onmessage = (ev) => {
       try {
         const payload = JSON.parse(ev.data);

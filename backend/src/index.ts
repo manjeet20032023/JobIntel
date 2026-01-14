@@ -26,11 +26,22 @@ const app = express();
 const corsOrigin = process.env.CORS_ORIGIN;
 if (corsOrigin) {
   const origins = corsOrigin.split(',').map((s) => s.trim());
-  app.use(cors({ origin: origins, credentials: true }));
+  // Use function mode so we can explicitly allow only configured origins and ensure the correct headers are set
+  app.use(cors({
+    origin: (origin, callback) => {
+      // Allow non-browser (e.g., curl) requests with no origin
+      if (!origin) return callback(null, true);
+      if (origins.includes(origin as string)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  }));
+
   // Extra middleware to explicitly set CORS response headers for allowed origins
   app.use((req, res, next) => {
     const origin = req.headers.origin as string | undefined;
     if (origin && origins.includes(origin)) {
+      // Explicitly reflect the origin back for the browser
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
       res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
