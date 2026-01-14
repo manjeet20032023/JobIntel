@@ -36,3 +36,5 @@ See steps below for quick setup and required environment variables.
 - `render.yaml` and `netlify.toml` are present to help configure the services.
 - Removed Azure deployment workflows and references to avoid conflicts with new providers.
 
+**CORS note:** I added `CORS_ORIGIN=https://jobintell.netlify.app` to `render.yaml` and pushed a change so the backend will accept requests from the Netlify frontend. If you use a custom domain, update `CORS_ORIGIN` accordingly and redeploy the backend.
+
