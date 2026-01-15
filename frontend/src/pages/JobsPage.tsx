@@ -50,7 +50,7 @@ const JobsPage = () => {
   const [batchFilters, setBatchFilters] = useState<number[]>([]);
   const [companyFilters, setCompanyFilters] = useState<string[]>([]);
   const [remoteOnly, setRemoteOnly] = useState(false);
-  const [sortBy, setSortBy] = useState<'relevance' | 'date' | 'salary'>('relevance');
+  const [sortBy, setSortBy] = useState<'relevance' | 'date' | 'salary'>('date');
   const [showFilters, setShowFilters] = useState(false);
 
   // Backend base URL (set VITE_API_URL environment variable during build)
@@ -208,7 +208,11 @@ const JobsPage = () => {
       postedAt: bj.createdAt,
     })) as Job[];
 
-    const result = [...mockJobs, ...convertedPublished, ...convertedBackendJobs];
+    // Use only backend jobs if available, otherwise fall back to mock + published jobs
+    // Backend is the source of truth - don't mix to avoid duplicates
+    const result = backendJobs.length > 0 
+      ? convertedBackendJobs
+      : [...mockJobs, ...convertedPublished];
     console.debug('allJobs: mock=', mockJobs.length, 'published=', convertedPublished.length, 'backend=', convertedBackendJobs.length, 'total=', result.length);
     return result;
   }, [publishedJobs, backendJobs]);

@@ -72,9 +72,13 @@ export default function AdminJobs() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [sourceFilter, setSourceFilter] = useState<string>('');
   const [rawJobText, setRawJobText] = useState('');
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isManualFormOpen, setIsManualFormOpen] = useState(false);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [parsedJob, setParsedJob] = useState<ParsedJobData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +88,23 @@ export default function AdminJobs() {
   const [backendJobs, setBackendJobs] = useState<any[]>([]);
   const [backendError, setBackendError] = useState<string | null>(null);
   const [loadingBackend, setLoadingBackend] = useState(false);
+
+  // Form state for manual job creation/editing
+  const [formData, setFormData] = useState({
+    title: '',
+    company: '',
+    location: '',
+    isRemote: false,
+    type: 'full-time' as const,
+    description: '',
+    experience: '',
+    salary: '',
+    techStack: [] as string[],
+    eligibility: '',
+    batch: [] as number[],
+    applyLink: '',
+    deadline: '',
+  });
 
   const fetchBackendJobs = async () => {
     setLoadingBackend(true);
@@ -109,6 +130,135 @@ export default function AdminJobs() {
   useEffect(() => {
     fetchBackendJobs();
   }, []);
+
+  // Open edit form with job data
+  const handleEditJob = (jobId: string) => {
+    const job = combinedJobs.find(j => j.id === jobId);
+    if (!job) return;
+    
+    setEditingJobId(jobId);
+    setFormData({
+      title: job.title || '',
+      company: job.company || '',
+      location: job.location || '',
+      isRemote: job.isRemote || false,
+      type: job.type || 'full-time',
+      description: job.description || '',
+      experience: job.experience || '',
+      salary: job.salary?.max?.toString() || '',
+      techStack: job.techStack || [],
+      eligibility: job.eligibility || '',
+      batch: job.batch || [],
+      applyLink: job.applyLink || '',
+      deadline: job.deadline || '',
+    });
+    setIsManualFormOpen(true);
+  };
+
+  // Handle form submission for add/edit
+  const handleSubmitForm = async () => {
+    if (!formData.title || !formData.company) {
+      toast({ title: 'Error', description: 'Title and company are required', variant: 'destructive' });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const payload = {
+        title: formData.title,
+        company: formData.company,
+        location: formData.location,
+        isRemote: formData.isRemote,
+        type: formData.type,
+        description: formData.description,
+        experience: formData.experience,
+        salary: formData.salary ? { max: parseInt(formData.salary) } : undefined,
+        meta: {
+          company: formData.company,
+          location: formData.location,
+          isRemote: formData.isRemote,
+          techStack: formData.techStack,
+          batch: formData.batch,
+          applyLink: formData.applyLink,
+        },
+        batch: formData.batch,
+        applyLink: formData.applyLink,
+        deadline: formData.deadline || undefined,
+        status: 'active',
+      };
+
+      let url = '/api/jobs';
+      let method = 'POST';
+
+      if (editingJobId) {
+        url = `/api/jobs/${editingJobId}`;
+        method = 'PATCH';
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        toast({
+          title: editingJobId ? 'Job Updated' : 'Job Created',
+          description: editingJobId ? 'Job updated successfully' : 'Job created successfully',
+        });
+        setIsManualFormOpen(false);
+        setEditingJobId(null);
+        setFormData({
+          title: '',
+          company: '',
+          location: '',
+          isRemote: false,
+          type: 'full-time',
+          description: '',
+          experience: '',
+          salary: '',
+          techStack: [],
+          eligibility: '',
+          batch: [],
+          applyLink: '',
+          deadline: '',
+        });
+        fetchBackendJobs();
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Status ${response.status}: ${errorText}`);
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to save job',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      company: '',
+      location: '',
+      isRemote: false,
+      type: 'full-time',
+      description: '',
+      experience: '',
+      salary: '',
+      techStack: [],
+      eligibility: '',
+      batch: [],
+      applyLink: '',
+      deadline: '',
+    });
+    setEditingJobId(null);
+    setIsManualFormOpen(false);
+  };
 
   // Handlers for admin actions
   const handleDelete = async (id: string, source?: string) => {
@@ -199,15 +349,22 @@ export default function AdminJobs() {
       deadline: bj.deadline || null,
     }));
 
-    const result = [...adminJobs, ...fromPublished, ...fromBackend];
+    // Use only backend jobs to avoid duplicates, sort by newest first
+    const result = backendJobs.length > 0 
+      ? fromBackend.sort((a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime())
+      : [...adminJobs, ...fromPublished].sort((a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime());
     console.debug('Admin: combined jobs counts', { mock: adminJobs.length, published: fromPublished.length, backend: fromBackend.length, total: result.length });
     return result;
   }, [publishedJobs, backendJobs]);
 
   const filteredJobs = combinedJobs.filter(
-    (job) =>
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (String(job.company) || '').toLowerCase().includes(searchQuery.toLowerCase())
+    (job) => {
+      const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (String(job.company) || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = !statusFilter || job.status === statusFilter;
+      const matchesSource = !sourceFilter || job.source === sourceFilter;
+      return matchesSearch && matchesStatus && matchesSource;
+    }
   );
 
   const handleAiParse = async () => {
@@ -343,10 +500,153 @@ export default function AdminJobs() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Job
-          </Button>
+          <Dialog open={isManualFormOpen} onOpenChange={setIsManualFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Job
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingJobId ? 'Edit Job' : 'Add New Job'}</DialogTitle>
+                <DialogDescription>
+                  Fill in all the job details below. All fields marked with * are required.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <Label htmlFor="title">Job Title *</Label>
+                    <Input
+                      id="title"
+                      placeholder="e.g., Senior Software Engineer"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="company">Company *</Label>
+                    <Input
+                      id="company"
+                      placeholder="e.g., Google"
+                      value={formData.company}
+                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      placeholder="e.g., Bangalore, India"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="type">Job Type</Label>
+                    <select
+                      id="type"
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                    >
+                      <option value="full-time">Full-time</option>
+                      <option value="part-time">Part-time</option>
+                      <option value="contract">Contract</option>
+                      <option value="internship">Internship</option>
+                      <option value="freelance">Freelance</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="salary">Salary (Max Amount)</Label>
+                    <Input
+                      id="salary"
+                      type="number"
+                      placeholder="e.g., 100000"
+                      value={formData.salary}
+                      onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <div className="flex items-center gap-2 h-10">
+                      <input
+                        type="checkbox"
+                        id="remote"
+                        checked={formData.isRemote}
+                        onChange={(e) => setFormData({ ...formData, isRemote: e.target.checked })}
+                        className="rounded"
+                      />
+                      <Label htmlFor="remote" className="cursor-pointer">Remote</Label>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Job description..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="experience">Experience Required</Label>
+                    <Input
+                      id="experience"
+                      placeholder="e.g., 3-5 years"
+                      value={formData.experience}
+                      onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="techStack">Tech Stack (comma separated)</Label>
+                    <Input
+                      id="techStack"
+                      placeholder="e.g., React, Node.js, MongoDB"
+                      value={formData.techStack.join(', ')}
+                      onChange={(e) => setFormData({ ...formData, techStack: e.target.value.split(',').map(s => s.trim()) })}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="batch">Batch (comma separated)</Label>
+                    <Input
+                      id="batch"
+                      placeholder="e.g., 2024, 2025, 2026"
+                      value={formData.batch.join(', ')}
+                      onChange={(e) => setFormData({ ...formData, batch: e.target.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)) })}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="applyLink">Apply Link</Label>
+                    <Input
+                      id="applyLink"
+                      placeholder="https://..."
+                      value={formData.applyLink}
+                      onChange={(e) => setFormData({ ...formData, applyLink: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="deadline">Deadline</Label>
+                    <Input
+                      id="deadline"
+                      type="date"
+                      value={formData.deadline}
+                      onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={resetForm}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmitForm} disabled={isLoading}>
+                  {isLoading ? 'Saving...' : (editingJobId ? 'Update Job' : 'Create Job')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -381,21 +681,81 @@ export default function AdminJobs() {
       {/* Filters */}
       <Card>
         <CardHeader className="pb-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>All Jobs</CardTitle>
-            <div className="flex gap-2">
-              <div className="relative flex-1 sm:w-[300px]">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search jobs..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle>All Jobs</CardTitle>
+              <div className="flex gap-2">
+                <div className="relative flex-1 sm:w-[300px]">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search jobs..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
               </div>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-              </Button>
+            </div>
+            {/* Filter Tags */}
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">Filters:</span>
+              </div>
+              {/* Status Filter */}
+              {statusFilter && (
+                <Badge variant="secondary" className="flex items-center gap-2">
+                  Status: {statusFilter}
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => setStatusFilter('')}
+                  />
+                </Badge>
+              )}
+              {/* Source Filter */}
+              {sourceFilter && (
+                <Badge variant="secondary" className="flex items-center gap-2">
+                  Source: {sourceFilter}
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => setSourceFilter('')}
+                  />
+                </Badge>
+              )}
+              {/* Status Dropdown */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-1 rounded-md border border-input bg-background text-sm hover:bg-muted cursor-pointer"
+              >
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="active">Active</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              {/* Source Dropdown */}
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="px-3 py-1 rounded-md border border-input bg-background text-sm hover:bg-muted cursor-pointer"
+              >
+                <option value="">All Sources</option>
+                <option value="manual">Manual</option>
+                <option value="crawler">Crawler</option>
+                <option value="api">API</option>
+              </select>
+              {(statusFilter || sourceFilter) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setStatusFilter('');
+                    setSourceFilter('');
+                  }}
+                  className="h-6 px-2 text-xs"
+                >
+                  Clear Filters
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -444,7 +804,7 @@ export default function AdminJobs() {
                             <Eye className="mr-2 h-4 w-4" />
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleEditJob(job.id)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
