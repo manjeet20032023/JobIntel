@@ -17,6 +17,8 @@ import sourceAdminRoutes from "./routes/source";
 import userRoutes from './routes/user';
 import skillsRoutes from './routes/skills';
 import profileFieldsRoutes from './routes/profileFields';
+import analyticsRoutes from './routes/analytics';
+import { trackPageView } from "./middleware/analytics";
 
 dotenv.config();
 const log = debug("jobintel:server");
@@ -108,6 +110,9 @@ app.get("/api/health", async (_req, res) => {
   return res.status(statusCode).json(ok);
 });
 
+// Add page view tracking middleware
+app.use(trackPageView);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/companies", companyRoutes);
@@ -120,6 +125,7 @@ app.use('/api/skills', skillsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/profile-fields', profileFieldsRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 const PORT = process.env.PORT || 4000;
 const MONGODB_URI = process.env.MONGODB_URI || "";
