@@ -76,7 +76,7 @@ const AuthRequiredModal = ({
             </ul>
           </div>
 
-          <div className="flex gap-3 mt-6">
+          <div className="flex flex-col gap-3 mt-6 sm:flex-row">
             <Button
               variant="outline"
               onClick={onClose}
