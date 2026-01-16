@@ -18,6 +18,11 @@ export interface IUser extends mongoose.Document {
     autoApply?: boolean;
     timestamp?: Date;
   };
+  resume?: {
+    rawText?: string;
+    parsedAt?: Date;
+    embeddingId?: string;
+  };
 }
 
 const UserSchema = new Schema<IUser>(
@@ -36,6 +41,11 @@ const UserSchema = new Schema<IUser>(
     consent: {
       autoApply: { type: Boolean, default: false },
       timestamp: Date,
+    },
+    resume: {
+      rawText: String,
+      parsedAt: Date,
+      embeddingId: String,
     },
   },
   { timestamps: true }

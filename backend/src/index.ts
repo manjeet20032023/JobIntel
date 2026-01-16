@@ -18,6 +18,7 @@ import userRoutes from './routes/user';
 import skillsRoutes from './routes/skills';
 import profileFieldsRoutes from './routes/profileFields';
 import analyticsRoutes from './routes/analytics';
+import resumeRoutes from './routes/resume';
 import { trackPageView } from "./middleware/analytics";
 
 dotenv.config();
@@ -119,13 +120,16 @@ app.use("/api/companies", companyRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/docs", openapiRoutes);
 app.use(seoRoutes);
-app.use("/api/notifications", notificationRoutes);app.use('/api/payments', paymentsRoutes);app.use('/api/admin', sourceAdminRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use('/api/payments', paymentsRoutes);
+app.use('/api/admin', sourceAdminRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/profile-fields', profileFieldsRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/resume', resumeRoutes);
 
 const PORT = process.env.PORT || 4000;
 const MONGODB_URI = process.env.MONGODB_URI || "";

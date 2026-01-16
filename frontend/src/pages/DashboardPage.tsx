@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuthStore } from '@/store/authStore';
 import { useApplicationStore } from '@/store/applicationStore';
+import { ResumeUploadModal } from '@/components/ResumeUploadModal';
 import {
   Briefcase,
   TrendingUp,
@@ -74,6 +75,7 @@ const DashboardPage = () => {
   const [availableSkills, setAvailableSkills] = useState<string[]>([]);
   const [savingSkills, setSavingSkills] = useState(false);
   const [newSkill, setNewSkill] = useState('');
+  const [resumeUploadOpen, setResumeUploadOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -625,7 +627,11 @@ const DashboardPage = () => {
                     Browse Jobs
                   </Button>
                 </Link>
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => setResumeUploadOpen(true)}
+                >
                   <FileText className="h-4 w-4 mr-2" />
                   Upload Resume
                 </Button>
@@ -660,6 +666,12 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Resume Upload Modal */}
+      <ResumeUploadModal 
+        open={resumeUploadOpen} 
+        onOpenChange={setResumeUploadOpen}
+      />
     </div>
   );
 };

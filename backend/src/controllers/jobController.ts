@@ -4,6 +4,7 @@ import { Company } from "../models/Company";
 import { Revenue } from "../models/Revenue";
 import { enqueueNotification } from "../queues/notificationQueue";
 import { publishRealtime } from "../utils/realtime";
+import { generateJobEmbedding, triggerJobMatchNotifications } from "../services/jobEmbeddingService";
 
 // AI Job Parser - Parse raw job text and extract structured data
 export async function parseJobText(req: Request, res: Response) {
@@ -230,6 +231,28 @@ export async function createJob(req: Request, res: Response) {
       console.warn('failed to publish job notification', notifErr?.message || notifErr);
     }
 
+    // Generate embedding and match against resumes if job is published
+    if (job.status === 'published') {
+      try {
+        console.log(`Generating embedding for published job ${job._id}...`);
+        const { embedding, matches } = await generateJobEmbedding(job._id.toString());
+        
+        // Trigger notifications for matching users
+        if (matches && matches.length > 0) {
+          try {
+            await triggerJobMatchNotifications(job._id.toString(), matches);
+          } catch (notifErr) {
+            console.error('Error triggering match notifications:', notifErr);
+          }
+        }
+
+        console.log(`Job ${job._id} embedded with ${matches?.length || 0} matches`);
+      } catch (embedErr) {
+        console.error('Error generating job embedding:', embedErr);
+        // Don't fail the job creation if embedding fails - it's a non-blocking operation
+      }
+    }
+
     return res.status(201).json(job);
   } catch (err) {
     return res.status(500).json({ error: "failed to create job", details: err });
@@ -250,14 +273,19 @@ export async function getJob(req: Request, res: Response) {
 // Update job
 export async function updateJob(req: Request, res: Response) {
   try {
+    const jobId = req.params.id;
     const updates = req.body;
     
+    // Get current job to check status change
+    const currentJob = await Job.findById(jobId).lean();
+    if (!currentJob) return res.status(404).json({ error: "not found" });
+
     // Parse batch years to numbers if batch is provided
     if (updates.batch) {
       updates.eligibleBatches = updates.batch.map((b: string) => parseInt(b)).filter((n: number) => !isNaN(n));
     }
     
-    const job = await Job.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true }).lean();
+    const job = await Job.findByIdAndUpdate(jobId, { $set: updates }, { new: true }).lean();
     if (!job) return res.status(404).json({ error: "not found" });
 
     // publish realtime event on significant updates
@@ -275,6 +303,28 @@ export async function updateJob(req: Request, res: Response) {
     } catch (err) {
       console.warn('failed to publish job update notification', err?.message || err);
     }
+
+    // Generate embedding if job transitioned to "published" status
+    if (currentJob.status !== 'published' && job.status === 'published') {
+      try {
+        console.log(`Job ${jobId} changed to published. Generating embedding...`);
+        const { embedding, matches } = await generateJobEmbedding(jobId);
+        
+        // Trigger notifications for matching users
+        if (matches && matches.length > 0) {
+          try {
+            await triggerJobMatchNotifications(jobId, matches);
+          } catch (notifErr) {
+            console.error('Error triggering match notifications:', notifErr);
+          }
+        }
+
+        console.log(`Job ${jobId} embedded with ${matches?.length || 0} matches`);
+      } catch (embedErr) {
+        console.error('Error generating job embedding on status change:', embedErr);
+      }
+    }
+
     return res.json(job);
   } catch (err) {
     return res.status(500).json({ error: "failed to update job", details: err });

@@ -6,7 +6,7 @@
 
 ## Project info
 
-This repository contains the JobScout web application.
+This repository contains the JobScout web application with **AI-powered Resume ↔ Job Matching**.
 
 Repository layout (scaffold):
 
@@ -14,6 +14,16 @@ Repository layout (scaffold):
 - `backend/` — Express + TypeScript starter (see `backend/README.md`).
 - `database/` — database migrations and helpers.
 - `types/` — shared TypeScript types used across services.
+
+## Key Features
+
+### 🤖 AI-Powered Resume Matching
+- Upload resume (PDF/DOCX) → Automatic OpenAI embedding generation
+- Admin posts job → Auto-matches against all user resumes
+- Users see **all matching jobs** sorted by match score (≥70% threshold)
+- Automatic notifications when new jobs match user's resume
+
+See [Resume Matching Documentation](./backend/docs/RESUME_MATCHING.md) for detailed API docs.
 
 ## Editing and running locally
 
@@ -27,6 +37,9 @@ cd <YOUR_PROJECT_NAME>
 # Install dependencies
 npm install
 
+# Configure environment (see backend/.env.example.resume)
+# Copy and update: cp backend/.env.example.resume backend/.env
+
 # Start development server
 npm run dev
 ```
@@ -38,6 +51,9 @@ npm run dev
 - React
 - shadcn-ui
 - Tailwind CSS
+- **OpenAI Embeddings API** (for resume matching)
+- MongoDB + Mongoose (database)
+- Redis + BullMQ (queues & notifications)
 
 ## Monorepo commands
 
