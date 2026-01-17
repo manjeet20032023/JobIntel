@@ -85,6 +85,32 @@ export const LinkedInScraperUI = () => {
 
   const [salaryData, setSalaryData] = useState<SalaryDataResponse | null>(null);
 
+  // Company search state
+  const [selectedCompany, setSelectedCompany] = useState('');
+  
+  // Company lists
+  const faangCompanies = [
+    'Google',
+    'Apple',
+    'Amazon',
+    'Meta',
+    'Microsoft',
+    'Netflix',
+  ];
+
+  const serviceBasedCompanies = [
+    'TCS',
+    'Infosys',
+    'Wipro',
+    'HCL Technologies',
+    'Tech Mahindra',
+    'Cognizant',
+    'Accenture',
+    'Capgemini',
+    'IBM',
+    'Deloitte',
+  ];
+
   // Transform backend job data to frontend Job interface
   const transformJob = (job: any): Job => {
     // Handle various possible field names for apply URL
@@ -192,6 +218,53 @@ export const LinkedInScraperUI = () => {
     }
   };
 
+  // Handle company search
+  const handleCompanySearch = async () => {
+    if (!selectedCompany.trim()) {
+      setError('Please select a company');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Search with company name as keyword to find all jobs from that company
+      const response = await axios.post('/api/scraper/advanced-search', {
+        keyword: selectedCompany,
+        location: 'India',
+        pages: 5,
+      });
+
+      if (response.data.success) {
+        // Filter results by company name
+        const filteredJobs = (response.data.jobs || []).filter(
+          (job: any) => 
+            job.employer_name?.toLowerCase().includes(selectedCompany.toLowerCase()) ||
+            job.company?.toLowerCase().includes(selectedCompany.toLowerCase())
+        );
+
+        setResults({
+          searchId: response.data.searchId,
+          jobs: filteredJobs.map(transformJob),
+          jobsFound: filteredJobs.length,
+        });
+
+        if (filteredJobs.length === 0) {
+          setError(`No jobs found for ${selectedCompany} in India`);
+        }
+      } else {
+        setError(response.data.error || 'Search failed');
+      }
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Failed to search by company');
+      console.error('Company search error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getPresetTitle = (index: number) => {
     return PRESET_SEARCHES[index]?.title || 'Unknown Preset';
   };
@@ -202,26 +275,27 @@ export const LinkedInScraperUI = () => {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <Zap className="h-8 w-8 text-primary" />
-          <h2 className="text-3xl md:text-4xl font-bold">LinkedIn Job Scraper</h2>
+          <h2 className="text-3xl md:text-4xl font-bold">Job Search & Discovery</h2>
         </div>
         <p className="text-muted-foreground text-lg">
-          Search live LinkedIn jobs from OpenWeb Ninja API. Find opportunities across India with advanced filters.
+          Find opportunities across India with advanced filters and company-wise search.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-8 border-b border-border">
-        {(['search', 'salary', 'history'] as const).map((tab) => (
+      <div className="flex gap-2 mb-8 border-b border-border overflow-x-auto">
+        {(['search', 'company', 'salary', 'history'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-3 font-semibold border-b-2 transition-colors capitalize ${
+            className={`px-4 py-3 font-semibold border-b-2 transition-colors capitalize whitespace-nowrap ${
               activeTab === tab
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             {tab === 'search' && <Search className="inline h-4 w-4 mr-2" />}
+            {tab === 'company' && <Building2 className="inline h-4 w-4 mr-2" />}
             {tab === 'salary' && <DollarSign className="inline h-4 w-4 mr-2" />}
             {tab === 'history' && <Clock className="inline h-4 w-4 mr-2" />}
             {tab}
@@ -709,6 +783,82 @@ export const LinkedInScraperUI = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* COMPANY TAB */}
+      {activeTab === 'company' && (
+        <div className="space-y-6 bg-background p-6 rounded-lg border border-border">
+          <h3 className="text-lg font-semibold">Search by Company</h3>
+          <p className="text-sm text-muted-foreground">
+            Find all job openings from your favorite companies
+          </p>
+
+          {/* FAANG Companies */}
+          <div>
+            <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Tech Giants (FAANG)
+            </h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {faangCompanies.map((company) => (
+                <button
+                  key={company}
+                  onClick={() => setSelectedCompany(company)}
+                  className={`px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
+                    selectedCompany === company
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                  }`}
+                >
+                  {company}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Service-Based Companies */}
+          <div>
+            <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Service-Based Companies
+            </h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {serviceBasedCompanies.map((company) => (
+                <button
+                  key={company}
+                  onClick={() => setSelectedCompany(company)}
+                  className={`px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
+                    selectedCompany === company
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                  }`}
+                >
+                  {company}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Search Button */}
+          <Button
+            onClick={handleCompanySearch}
+            disabled={loading || !selectedCompany}
+            size="lg"
+            className="w-full gap-2 mt-6"
+          >
+            {loading ? (
+              <>
+                <Loader className="h-4 w-4 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              <>
+                <Search className="h-4 w-4" />
+                Search {selectedCompany} Jobs
+              </>
+            )}
+          </Button>
         </div>
       )}
 

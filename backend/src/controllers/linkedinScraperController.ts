@@ -211,9 +211,11 @@ export const runPresetSearch = async (req: Request, res: Response) => {
       message: `Found ${savedJobIds.length} jobs matching "${preset.title}"`,
     });
   } catch (error) {
+    console.error('[LinkedIn Scraper] Preset search error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to run preset search',
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 };
