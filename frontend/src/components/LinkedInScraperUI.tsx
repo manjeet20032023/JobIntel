@@ -303,7 +303,7 @@ export const LinkedInScraperUI = () => {
         ))}
       </div>
 
-      {/* Error Alert */}
+      {/* Error Alert - Outside all tabs */}
       {error && (
         <div className="mb-6 bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex gap-3">
           <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
@@ -504,9 +504,11 @@ export const LinkedInScraperUI = () => {
               </Button>
             </div>
           )}
+        </div>
+      )}
 
-          {/* RESULTS */}
-          {results && results.jobs.length > 0 && (
+      {/* RESULTS - Outside all tab sections */}
+      {results && results.jobs.length > 0 && (
             <div className="space-y-6">
               {/* Results Header */}
               <div className="bg-background border border-border rounded-lg p-6">
@@ -557,140 +559,9 @@ export const LinkedInScraperUI = () => {
               </div>
 
               {/* Job Cards */}
-              <div className="space-y-4">
-                {results.jobs.map((job, index) => (
-                  <div
-                    key={job.jobId}
-                    className="bg-background border border-border rounded-lg p-6 hover:shadow-lg hover:border-primary/50 transition-all"
-                  >
-                    {/* Job Header */}
-                    <div className="flex justify-between items-start gap-4 mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-start gap-3 mb-2">
-                          <div className="flex-1">
-                            <h4 className="text-xl font-bold text-foreground hover:text-primary cursor-pointer">
-                              {job.title}
-                            </h4>
-                            <p className="text-primary font-semibold text-sm">
-                              {job.company}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" className="gap-2">
-                        <BookmarkPlus className="h-5 w-5" />
-                      </Button>
-                    </div>
-
-                    {/* Job Details Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 text-sm">
-                      {/* Location */}
-                      <div>
-                        <p className="text-muted-foreground font-semibold mb-1">Location:</p>
-                        <p className="flex items-center gap-2 text-foreground">
-                          <MapPin className="h-4 w-4 text-primary" />
-                          {job.location || 'Not specified'}
-                        </p>
-                      </div>
-
-                      {/* Salary */}
-                      <div>
-                        <p className="text-muted-foreground font-semibold mb-1">Salary:</p>
-                        {job.salary ? (
-                          <p className="flex items-center gap-2 text-foreground font-semibold">
-                            <DollarSign className="h-4 w-4 text-green-600" />
-                            ₹{job.salary.min.toLocaleString()} - ₹{job.salary.max.toLocaleString()}
-                          </p>
-                        ) : (
-                          <p className="text-muted-foreground">Not specified</p>
-                        )}
-                      </div>
-
-                      {/* Type */}
-                      <div>
-                        <p className="text-muted-foreground font-semibold mb-1">Type:</p>
-                        <p className="text-foreground">{job.employmentType || 'Full-time'}</p>
-                      </div>
-
-                      {/* Work Arrangement */}
-                      <div>
-                        <p className="text-muted-foreground font-semibold mb-1">Work:</p>
-                        <p className="flex items-center gap-2 text-foreground">
-                          {job.remote ? (
-                            <>
-                              <span className="text-lg">🌍</span>
-                              <span>Remote</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-lg">📍</span>
-                              <span>On-site</span>
-                            </>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Posted Date */}
-                    <div className="mb-4 pb-4 border-b border-border">
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Posted: {
-                          new Date(job.postedDate).getTime() > 0
-                            ? new Date(job.postedDate).toLocaleDateString()
-                            : 'Recently'
-                        }
-                      </p>
-                    </div>
-
-                    {/* Description */}
-                    <div className="mb-4">
-                      <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                        {job.description || 'No description available'}
-                      </p>
-                    </div>
-
-                    {/* Additional Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 text-xs">
-                      <div>
-                        <p className="text-muted-foreground font-semibold mb-1">Experience:</p>
-                        <p className="text-foreground">Not specified</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground font-semibold mb-1">Education:</p>
-                        <p className="text-foreground">Not specified</p>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4 border-t border-border">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => setSelectedJob(job)}
-                      >
-                        Details
-                      </Button>
-                      <a
-                        href={job.applyUrl || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1"
-                      >
-                        <Button size="sm" className="w-full gap-2">
-                          Apply
-                        </Button>
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
               {/* Footer */}
-              <div className="bg-muted/50 rounded-lg p-4 text-center text-xs text-muted-foreground">
-                © 2026 LinkedIn Job Scraper - India Edition | Professional Job Search Powered by OpenWeb Ninja
-              </div>
+            <div className="bg-muted/50 rounded-lg p-4 text-center text-xs text-muted-foreground">
+              © 2026 LinkedIn Job Scraper - India Edition | Professional Job Search Powered by OpenWeb Ninja
             </div>
           )}
         </div>
