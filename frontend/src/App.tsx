@@ -14,6 +14,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import JobsPage from "./pages/JobsPage";
 import JobDetailPage from "./pages/JobDetailPage";
+import JobPortalPage from "./pages/JobPortalPage";
 import PricingPage from "./pages/PricingPage";
 import DashboardPage from "./pages/DashboardPage";
 import OverviewPage from "./pages/dashboard/OverviewPage";
@@ -56,6 +57,7 @@ const AppContent = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/:id" element={<JobDetailPage />} />
+        <Route path="/job-portal" element={<JobPortalPage />} />
         <Route path="/pricing" element={<PricingPage />} />
       </Route>
 

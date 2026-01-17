@@ -20,6 +20,7 @@ import profileFieldsRoutes from './routes/profileFields';
 import analyticsRoutes from './routes/analytics';
 import resumeRoutes from './routes/resume';
 import activityRoutes from './routes/activity';
+import scraperRoutes from './routes/scraper';
 import { trackPageView } from "./middleware/analytics";
 
 dotenv.config();
@@ -132,6 +133,7 @@ app.use('/api/profile-fields', profileFieldsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/resume', resumeRoutes);
+app.use('/api/scraper', scraperRoutes);
 
 const PORT = process.env.PORT || 4000;
 const MONGODB_URI = process.env.MONGODB_URI || "";

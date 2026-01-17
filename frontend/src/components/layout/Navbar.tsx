@@ -12,6 +12,7 @@ import {
   Zap,
   Crown,
   ChevronDown,
+  Search,
 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -31,6 +32,7 @@ export const Navbar = () => {
 
   const navLinks = [
     { path: '/jobs', label: 'Browse Jobs', icon: Briefcase },
+    { path: '/job-portal', label: 'Job Portal', icon: Search },
     { path: '/pricing', label: 'Pricing', icon: Crown },
   ];
 
