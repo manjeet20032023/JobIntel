@@ -203,7 +203,7 @@ const ApplicationsPage = () => {
             </div>
           ) : (
             filteredApplications.map((app) => {
-              const config = statusConfig[app.status];
+              const config = statusConfig[app.status] || { badge: 'Applied', color: 'bg-blue-50 text-blue-900 border-blue-200', icon: '📤' };
               return (
                 <div key={app.id} className="p-5 hover:bg-muted/30 transition-colors">
                   <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
@@ -236,8 +236,8 @@ const ApplicationsPage = () => {
                       <div className="flex items-center gap-2">
                         <Select value={app.status} onValueChange={(newStatus) => updateApplicationStatus(app.id, newStatus)}>
                           <SelectTrigger className="w-fit">
-                            <Badge className={`${config.color} border cursor-pointer`}>
-                              {config.icon} {config.badge}
+                            <Badge className={`${config?.color || 'bg-blue-50 text-blue-900 border-blue-200'} border cursor-pointer`}>
+                              {config?.icon || '📤'} {config?.badge || 'Applied'}
                             </Badge>
                           </SelectTrigger>
                           <SelectContent>
@@ -290,11 +290,13 @@ const ApplicationsPage = () => {
             {applications
               .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
               .slice(0, 5)
-              .map((app, idx) => (
+              .map((app, idx) => {
+                const config = statusConfig[app.status] || { badge: 'Applied', color: 'bg-blue-50 text-blue-900 border-blue-200', icon: '📤' };
+                return (
                 <div key={app.id} className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <div className={`h-10 w-10 rounded-full flex items-center justify-center text-lg flex-shrink-0`}>
-                      {statusConfig[app.status].icon}
+                      {config.icon}
                     </div>
                     {idx !== 4 && <div className="w-0.5 h-8 bg-border my-2" />}
                   </div>
@@ -306,7 +308,9 @@ const ApplicationsPage = () => {
                     </p>
                   </div>
                 </div>
-              ))}
+                );
+              })
+            }
           </div>
         </div>
       )}

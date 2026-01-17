@@ -11,6 +11,9 @@ export interface IJob extends mongoose.Document {
   description?: string;
   requirements?: string[];
   responsibilities?: string[];
+  requiredSkills?: string[];
+  preferredSkills?: string[];
+  salary?: string;
   ctc?: string;
   applyUrl?: string;
   externalId?: string;
@@ -35,6 +38,9 @@ const JobSchema = new Schema<IJob>(
     description: String,
     requirements: [String],
     responsibilities: [String],
+    requiredSkills: [String],
+    preferredSkills: [String],
+    salary: String,
     ctc: String,
     applyUrl: String,
     externalId: { type: String, index: true },

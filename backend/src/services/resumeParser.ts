@@ -52,12 +52,39 @@ export class ResumeParser {
       }
     }
 
-    // Extract location (look for city, state patterns)
+    // Extract location (look for city, state patterns after contact info section)
     let location: string | undefined;
-    const locationRegex = /(?:located in|based in|location:?\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:,\s*[A-Z]{2})?)/;
-    const locationMatch = text.match(locationRegex);
-    if (locationMatch) {
-      location = locationMatch[1];
+    // Look for common location indicators in contact section (not the name line)
+    const locationPatterns = [
+      /(?:location|city|based in|lives in)[:\s]+([A-Za-z\s,]+?)(?:\n|$)/i,
+      /(?:^|\n)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:,\s*(?:[A-Z]{2}|[A-Za-z]+))?)(?:\s*\n\s*(?:\+?[0-9]|[a-zA-Z0-9._%+-]+@))/m,
+      /(?:\+?1?[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\s+([A-Za-z\s,]+?)(?:\n|$)/,
+    ];
+
+    for (const pattern of locationPatterns) {
+      const match = text.match(pattern);
+      if (match && match[1] && match[1].length < 50 && match[1].length > 2) {
+        const candidate = match[1].trim();
+        // Make sure it's not just the name again
+        if (candidate !== name && !candidate.match(/^[a-zA-Z\s]+@/) && candidate.includes(' ') || candidate.includes(',')) {
+          location = candidate;
+          break;
+        }
+      }
+    }
+
+    // If still no location found, try to extract from lines containing common location keywords
+    if (!location) {
+      for (const line of lines) {
+        const lineLower = line.toLowerCase();
+        if ((lineLower.includes('india') || lineLower.includes('usa') || lineLower.includes('delhi') || 
+             lineLower.includes('bangalore') || lineLower.includes('mumbai') || lineLower.includes('new york') ||
+             lineLower.includes('san francisco') || lineLower.includes('remote')) && 
+            line !== name && !line.includes('@')) {
+          location = line;
+          break;
+        }
+      }
     }
 
     // Extract batch/year (graduation year, degree year)

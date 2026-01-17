@@ -10,6 +10,7 @@ import { Zap, Plus, Trash2, Save, Loader2 } from 'lucide-react';
 const SkillsPage = () => {
   const { user, updateUser } = useAuthStore();
   const [skills, setSkills] = useState<string[]>(user?.skills || []);
+  const [parsedSkills, setParsedSkills] = useState<string[]>([]);
   const [availableSkills, setAvailableSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,8 +19,16 @@ const SkillsPage = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // Get skills from user object
+    if (user) {
+      setSkills(user.skills || []);
+      // Get auto-parsed skills from parsedResumeData if available
+      if ((user as any).parsedResumeData?.parsedSkills) {
+        setParsedSkills((user as any).parsedResumeData.parsedSkills);
+      }
+    }
     fetchAvailableSkills();
-  }, []);
+  }, [user]);
 
   const fetchAvailableSkills = async () => {
     try {
@@ -142,7 +151,29 @@ const SkillsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Skills Section */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Selected Skills */}
+          {/* Auto-Parsed Skills from Resume */}
+          {parsedSkills.length > 0 && (
+            <div className="bg-blue-50 rounded-xl p-8 border border-blue-200 mb-6">
+              <h3 className="text-lg font-semibold mb-4 text-blue-900">
+                🎯 Auto-Parsed from Resume ({parsedSkills.length})
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {parsedSkills.map((skill) => (
+                  <Badge
+                    key={skill}
+                    className="px-4 py-2 bg-blue-100 text-blue-900 border border-blue-300"
+                  >
+                    ✓ {skill}
+                  </Badge>
+                ))}
+              </div>
+              <p className="text-sm text-blue-800 mt-4">
+                These skills were automatically extracted from your uploaded resume. They help improve your job matching accuracy.
+              </p>
+            </div>
+          )}
+
+          {/* All Skills */}
           <div className="bg-card rounded-xl p-8 border border-border/40">
             <h3 className="text-lg font-semibold mb-6">Your Skills ({skills.length})</h3>
             {skills.length > 0 ? (

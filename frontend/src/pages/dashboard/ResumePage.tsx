@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Download, Trash2, CheckCircle2, AlertCircle, Loader2, Sparkles } from 'lucide-react';
@@ -36,6 +37,7 @@ interface JobMatch {
 
 const ResumePage = () => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -432,7 +434,10 @@ const ResumePage = () => {
                       )}
                     </div>
 
-                    <Button className="w-full gap-2 bg-gradient-to-r from-primary to-accent">
+                    <Button 
+                      onClick={() => navigate(`/jobs/${job.jobId}`)}
+                      className="w-full gap-2 bg-gradient-to-r from-primary to-accent"
+                    >
                       <FileText className="h-4 w-4" />
                       View & Apply
                     </Button>
