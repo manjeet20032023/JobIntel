@@ -270,20 +270,20 @@ export const LinkedInScraperUI = () => {
                 Choose from pre-built searches optimized for Indian job market
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {PRESET_SEARCHES.map((preset, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedPreset(idx)}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                    className={`px-3 py-2 rounded-lg border-2 transition-all text-left text-sm ${
                       selectedPreset === idx
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50 hover:bg-muted/50'
                     }`}
                   >
-                    <div className="font-semibold text-sm">{preset.title}</div>
-                    <div className="text-xs text-muted-foreground mt-2">
-                      <MapPin className="inline h-3 w-3 mr-1" />
+                    <div className="font-semibold text-xs line-clamp-1">{preset.title}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      <MapPin className="inline h-2.5 w-2.5 mr-0.5" />
                       {preset.location}
                     </div>
                   </button>
