@@ -18,7 +18,7 @@ interface Job {
 
 interface ResumeUploadModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (open: boolean, parsedData?: any) => void;
 }
 
 export const ResumeUploadModal = ({ open, onOpenChange }: ResumeUploadModalProps) => {
@@ -94,7 +94,10 @@ export const ResumeUploadModal = ({ open, onOpenChange }: ResumeUploadModalProps
       setSuccess(true);
       setResumeStatus(uploadResult);
 
-      // Fetch matching jobs
+      // Pass parsed data back to parent
+      if (uploadResult.parsedData) {
+        onOpenChange(false, uploadResult.parsedData);
+      }
       const matchesResponse = await fetch('/api/resume/matching-jobs', {
         method: 'GET',
         headers: {

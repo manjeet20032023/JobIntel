@@ -7,6 +7,11 @@ export interface IUser extends mongoose.Document {
   passwordHash: string;
   name?: string;
   phone?: string;
+  location?: string;
+  batch?: string;
+  skills?: string[];
+  expectedSalary?: string | number;
+  profileCompletion?: number;
   roles: string[];
   tier: string;
   notificationPrefs: {
@@ -22,6 +27,11 @@ export interface IUser extends mongoose.Document {
     rawText?: string;
     parsedAt?: Date;
     embeddingId?: string;
+    embedding?: number[];
+  };
+  parsedResumeData?: {
+    parsedSkills?: string[];
+    parsedProfile?: Record<string, any>;
   };
 }
 
@@ -31,6 +41,11 @@ const UserSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true },
     name: String,
     phone: String,
+    location: String,
+    batch: String,
+    skills: [String],
+    expectedSalary: Schema.Types.Mixed,
+    profileCompletion: { type: Number, default: 0 },
     roles: { type: [String], default: ["user"] },
     tier: { type: String, default: "free" },
     notificationPrefs: {
@@ -46,6 +61,11 @@ const UserSchema = new Schema<IUser>(
       rawText: String,
       parsedAt: Date,
       embeddingId: String,
+      embedding: [Number],
+    },
+    parsedResumeData: {
+      parsedSkills: [String],
+      parsedProfile: Schema.Types.Mixed,
     },
   },
   { timestamps: true }
